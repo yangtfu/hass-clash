@@ -2,31 +2,30 @@
 
 import logging
 
+from homeassistant import config_entries
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.typing import DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import CONF_SELECTOR, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
+    config_entry: config_entries.ConfigEntry,
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up the select platform."""
-
-    coordinator = hass.data[DOMAIN]["coordinator"]
+    """Set up platform from a ConfigEntry."""
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
 
     selectors = [
-        ClashSelector(coordinator, d["name"])
-        for d in coordinator.data.proxies.values()
-        if d["type"] == "Selector"
+        ClashSelector(coordinator, d) for d in config_entry.options[CONF_SELECTOR]
     ]
     selectors.append(
         ClashMode(
@@ -42,6 +41,7 @@ class ClashSelector(CoordinatorEntity, SelectEntity):
     def __init__(self, coordinator, name) -> None:
         """Initialize."""
         super().__init__(coordinator, context=name)
+        self.host = coordinator.host
         self.name_id = name
         self._proxy = coordinator.data.proxies[name]
         self._coordinator = coordinator
@@ -74,7 +74,21 @@ class ClashSelector(CoordinatorEntity, SelectEntity):
         """Return unique id."""
         # All entities must have a unique id.  Think carefully what you want this to be as
         # changing it later will cause HA to create new entities.
-        return f"{DOMAIN}-{self._proxy["name"]}-delay"
+        return f"{DOMAIN}-{self.host}-{self.name}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        # Identifiers are what group entities into the same device.
+        # If your device is created elsewhere, you can just specify the identifiers parameter.
+        # If your device connects via another device, add via_device parameter with the identifiers of that device.
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self.host)
+            },
+            configuration_url=f"http://{self.host}/ui",
+        )
 
     async def async_select_option(self, option: str) -> None:
         """Change the current activity."""
@@ -88,6 +102,7 @@ class ClashMode(CoordinatorEntity, SelectEntity):
     def __init__(self, coordinator) -> None:
         """Initialize."""
         super().__init__(coordinator, context=0)
+        self.host = coordinator.host
         self._coordinator = coordinator
         _LOGGER.info("Clash mode select created")
 
@@ -100,7 +115,7 @@ class ClashMode(CoordinatorEntity, SelectEntity):
     @property
     def name(self) -> str:
         """Return the name of the sensor."""
-        return "Clash mode"
+        return "mode"
 
     @property
     def current_option(self) -> str | None:
@@ -117,7 +132,21 @@ class ClashMode(CoordinatorEntity, SelectEntity):
         """Return unique id."""
         # All entities must have a unique id.  Think carefully what you want this to be as
         # changing it later will cause HA to create new entities.
-        return f"{DOMAIN}-mode"
+        return f"{DOMAIN}-{self.host}-{self.name}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information."""
+        # Identifiers are what group entities into the same device.
+        # If your device is created elsewhere, you can just specify the identifiers parameter.
+        # If your device connects via another device, add via_device parameter with the identifiers of that device.
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self.host)
+            },
+            configuration_url=f"http://{self.host}/ui",
+        )
 
     async def async_select_option(self, option: str) -> None:
         """Change the current activity."""

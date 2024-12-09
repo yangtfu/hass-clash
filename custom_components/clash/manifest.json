@@ -1,13 +1,11 @@
 {
-    "codeowners": [
-        "@yangtfu"
-    ],
-    "config_flow": false,
-    "dependencies": [],
-    "documentation": "https://github.com/yangtfu/hass-clash/",
-    "domain": "clash",
-    "iot_class": "local_polling",
-    "name": "Clash",
-    "requirements": [],
-    "version": "1.0.0"
+  "domain": "clash",
+  "name": "Clash",
+  "codeowners": ["@yangtfu"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/yangtfu/hass-clash/",
+  "iot_class": "local_polling",
+  "requirements": [],
+  "version": "1.1.0"
 }

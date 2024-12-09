@@ -1,0 +1,45 @@
+{
+    "config": {
+        "title": "Clash Integration",
+        "abort": {
+            "already_configured": "The host is already configured."
+        },
+        "error": {
+            "cannot_connect": "Failed to connect.",
+            "invalid_auth": "Invalid authentication.",
+            "unknown": "Unexpected error."
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Host",
+                    "password": "Password"
+                }
+            },
+            "entities": {
+                "data": {
+                    "delay": "Proxy delay sensors",
+                    "urltest": "URLTest selector sensors",
+                    "traffic": "Traffic speed sensors",
+                    "selector": "Manual selector selects"
+                },
+                "description": "Choose entities to be added",
+                "title": "Clash Options"
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "delay": "Proxy delay sensors",
+                    "urltest": "URLTest selector sensors",
+                    "traffic": "Traffic speed sensors",
+                    "selector": "Manual selector selects"
+                },
+                "description": "Choose entities",
+                "title": "Clash Options"
+            }
+        }
+    }
+}

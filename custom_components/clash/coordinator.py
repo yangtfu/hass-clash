@@ -5,6 +5,10 @@ from datetime import timedelta
 import json
 import logging
 
+from aiohttp import ClientResponseError
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -27,7 +31,7 @@ class ClashCoordinator(DataUpdateCoordinator):
 
     data: ClashData
 
-    def __init__(self, hass: HomeAssistant, host, pwd) -> None:
+    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
         """Initialize."""
 
         super().__init__(
@@ -43,11 +47,17 @@ class ClashCoordinator(DataUpdateCoordinator):
             setup_method=self.async_setup,
             update_interval=timedelta(seconds=SCAN_INTERVAL),
         )
+        # Set variables from values entered in config flow setup
+        self.host = config_entry.data[CONF_HOST]
         self.hass = hass
-        self._host = host
-        self._headers = {"authorization": f"Bearer {pwd}"}
+        self.headers = (
+            {"authorization": f"Bearer {config_entry.data[CONF_PASSWORD]}"}
+            if CONF_PASSWORD in config_entry.data
+            else None
+        )
         self.session = async_get_clientsession(hass=self.hass, verify_ssl=False)
-        self._proxies = []
+        self.proxies = []
+        self._mode = None
 
     async def async_setup(self):
         """Set up the coordinator.
@@ -59,7 +69,7 @@ class ClashCoordinator(DataUpdateCoordinator):
         coordinator.async_config_entry_first_refresh.
         """
         proxies = await self.update_proxy()
-        self._proxies = proxies.keys()
+        self.proxies = proxies.keys()
         self.data = ClashData(clash_mode=(await self.update_mode()), proxies=proxies)
 
     async def async_update_data(self):
@@ -73,7 +83,7 @@ class ClashCoordinator(DataUpdateCoordinator):
         proxies_to_update = {}
         mode = ""
         if listening_entities:
-            for name in self._proxies:
+            for name in self.proxies:
                 if name in listening_entities:
                     proxies_to_update[name] = await self.update_proxy(proxy=name)
             if 0 in listening_entities:
@@ -90,25 +100,25 @@ class ClashCoordinator(DataUpdateCoordinator):
         try:
             if proxy is None:
                 async with self.session.get(
-                    f"http://{self._host}/proxies",
-                    headers=self._headers,
+                    f"http://{self.host}/proxies",
+                    headers=self.headers,
                 ) as resp:
                     return json.loads(await resp.text())["proxies"]
-            if proxy in self._proxies:
+            if proxy in self.proxies:
                 async with self.session.get(
-                    f"http://{self._host}/proxies/{proxy}",
-                    headers=self._headers,
+                    f"http://{self.host}/proxies/{proxy}",
+                    headers=self.headers,
                 ) as resp:
                     return json.loads(await resp.text())
-        except Exception as e:
-            _LOGGER.error("Proxy update error: %s", e.message)
+        except ClientResponseError as e:
+            _LOGGER.error("Proxy update error: %s", e)
             return None
 
     async def update_mode(self) -> str:
         """Update config data."""
         async with self.session.get(
-            f"http://{self._host}/configs",
-            headers=self._headers,
+            f"http://{self.host}/configs",
+            headers=self.headers,
         ) as resp:
             resp.raise_for_status()
             self._mode = json.loads(await resp.text())["mode"]
@@ -117,15 +127,15 @@ class ClashCoordinator(DataUpdateCoordinator):
     async def select_selector(self, proxy, option) -> None:
         """Select clash mode."""
         await self.session.put(
-            f"http://{self._host}/proxies/{proxy}",
-            headers=self._headers,
+            f"http://{self.host}/proxies/{proxy}",
+            headers=self.headers,
             data=f'{{"name": "{option}"}}',
         )
 
     async def select_mode(self, option) -> None:
         """Select clash mode."""
         await self.session.patch(
-            f"http://{self._host}/configs",
-            headers=self._headers,
+            f"http://{self.host}/configs",
+            headers=self.headers,
             data=f'{{"mode": "{option}"}}',
         )

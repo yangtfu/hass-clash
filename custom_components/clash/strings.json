@@ -1,0 +1,29 @@
+{
+    "config": {
+        "title": "Clash Integration",
+        "abort": {
+            "already_configured": "The host is already configured"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Host",
+                    "password": "Password"
+                }
+            },
+            "entities": {
+                "data": {
+                    "delay": "Delay sensors",
+                    "urltest": "URLTest sensors",
+                    "traffic": "Traffic sensors",
+                    "Selector": "Selector selects"
+                }
+            }
+        }
+    }
+}

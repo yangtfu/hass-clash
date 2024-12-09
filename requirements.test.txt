@@ -1,5 +1,4 @@
 pytest
 pytest-asyncio
 pytest-cov
-async-clash
 pytest-homeassistant-custom-component==0.13.183
