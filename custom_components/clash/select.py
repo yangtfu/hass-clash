@@ -125,7 +125,7 @@ class ClashMode(CoordinatorEntity, SelectEntity):
     @property
     def options(self) -> list[str]:
         """Return a set of selectable options."""
-        return ["direct", "rule", "global"]
+        return ["Direct", "Rule", "Global"]
 
     @property
     def unique_id(self) -> str:
@@ -150,5 +150,5 @@ class ClashMode(CoordinatorEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change the current activity."""
-        await self._coordinator.select_mode(option)
+        await self._coordinator.select_mode(option.capitalize())
         self.schedule_update_ha_state(force_refresh=True)

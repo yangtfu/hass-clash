@@ -121,7 +121,7 @@ class ClashCoordinator(DataUpdateCoordinator):
             headers=self.headers,
         ) as resp:
             resp.raise_for_status()
-            self._mode = json.loads(await resp.text())["mode"]
+            self._mode = json.loads(await resp.text())["mode"].capitalize()
         return self._mode
 
     async def select_selector(self, proxy, option) -> None:
